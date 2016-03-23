@@ -1,0 +1,34 @@
+{
+  "name": "hos-auth",
+  "version": "0.2.0",
+  "description": "Authentication of HoS calls.",
+  "main": "index.coffee",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HoS0/HoSAuth.git"
+  },
+  "keywords": [
+    "HoS"
+  ],
+  "author": "Ali Khoramshahi <al_kh31@yahoo.com> (al-kh.me)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/HoS0/HoSAuth"
+  },
+  "homepage": "https://github.com/HoS0/HoSAuth",
+  "dependencies": {
+    "bluebird": "^3.3.4",
+    "hos-com": "^0.2.0",
+    "node-uuid": "^1.4.7"
+  },
+  "devDependencies": {
+    "coffee-script": "^1.10.0",
+    "gulp": "^3.9.1",
+    "gulp-coffee": "^2.3.1",
+    "gulp-jasmine": "^2.3.0",
+    "jasmine-reporters": "^2.1.1"
+  }
+}
