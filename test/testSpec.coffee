@@ -16,7 +16,7 @@ describe "Create service", ()->
         # create different services
         for i in [0 .. 0]
             serviceCon = JSON.parse(JSON.stringify(generalContract))
-            serviceCon.name = "serviceTest#{i}"
+            serviceCon.serviceDoc.basePath = "serviceTest#{i}"
 
             # create different instances for each service
             for i in [0 .. 0]
@@ -32,11 +32,11 @@ describe "Create service", ()->
 describe "Check basic operations", ()->
     beforeEach ()->
         @serviceCon = JSON.parse(JSON.stringify(generalContract))
-        @serviceCon.name = "serviceTest#{crypto.randomBytes(4).toString('hex')}"
+        @serviceCon.serviceDoc.basePath = "serviceTest#{crypto.randomBytes(4).toString('hex')}"
         @serviceOne = new HosCom @serviceCon, amqpurl, username, password
 
         @serviceCon2 = JSON.parse(JSON.stringify(generalContract))
-        @serviceCon2.name = "serviceTest#{crypto.randomBytes(4).toString('hex')}"
+        @serviceCon2.serviceDoc.basePath = "serviceTest#{crypto.randomBytes(4).toString('hex')}"
         @serviceTwo = new HosCom @serviceCon2, amqpurl, username, password
 
         @HoSAuth = new HosAuth(amqpurl, username, password)
@@ -52,10 +52,10 @@ describe "Check basic operations", ()->
             @serviceOne.connect().then ()=>
                 @serviceTwo.connect().then ()=>
                     for i in [ 1 .. 100 ]
-                        @serviceTwo.sendMessage {foo: "bar"} , @serviceCon.name, {task: 'users', method: 'GET'}
+                        @serviceTwo.sendMessage {foo: "bar"} , @serviceCon.serviceDoc.basePath, {task: '/users', method: 'get'}, false
 
                 count = 0
-                @serviceOne.on 'users.GET', (msg)=>
+                @serviceOne.on '/users.get', (msg)=>
                     msg.reply()
                     count = count + 1
                     if count is 100
@@ -67,15 +67,37 @@ describe "Check basic operations", ()->
             else
                 msg.reject()
 
+    it "and it should count the reply coming back", (done)->
+        @HoSAuth.connect().then ()=>
+            @serviceOne.connect().then ()=>
+                @serviceTwo.connect().then ()=>
+                    count = 0
+                    for i in [ 1 .. 100 ]
+                        @serviceTwo.sendMessage {foo: "bar"} , @serviceCon.serviceDoc.basePath, {task: '/users', method: 'get'}
+                        .then ()=>
+                            count = count + 1
+                            if count is 100
+                                done()
+
+                @serviceOne.on '/users.get', (msg)=>
+                    msg.reply(msg.content)
+
+
+        @HoSAuth.on 'message', (msg)=>
+            if msg.content.foo is 'bar'
+                msg.accept()
+            else
+                msg.reject()
+
     it "and it sends a message and get the reply", (done)->
         @HoSAuth.connect().then ()=>
             @serviceOne.connect().then ()=>
                 @serviceTwo.connect().then ()=>
-                    @serviceTwo.sendMessage({foo: "bar"} , @serviceCon.name, {task: 'users', method: 'GET'}).then (replyPayload)=>
+                    @serviceTwo.sendMessage({foo: "bar"} , @serviceCon.serviceDoc.basePath, {task: '/users', method: 'get'}).then (replyPayload)=>
                         expect(replyPayload.foo).toEqual('notbar');
                         done()
 
-            @serviceOne.on 'users.GET', (msg)=>
+            @serviceOne.on '/users.get', (msg)=>
                 msg.reply({foo: "notbar"})
 
         @HoSAuth.on 'message', (msg)=>
@@ -85,11 +107,11 @@ describe "Check basic operations", ()->
         @HoSAuth.connect().then ()=>
             @serviceOne.connect().then ()=>
                 @serviceTwo.connect().then ()=>
-                    @serviceTwo.sendMessage({foo: 1} , @serviceCon.name, {task: 'users', method: 'GET'}).then (replyPayload)=>
+                    @serviceTwo.sendMessage({foo: 1} , @serviceCon.serviceDoc.basePath, {task: '/users', method: 'get'}).then (replyPayload)=>
                         expect(replyPayload.foo).toEqual(2);
                         done()
 
-            @serviceOne.on 'users.GET', (msg)=>
+            @serviceOne.on '/users.get', (msg)=>
                 msg.content.foo = msg.content.foo + 1
                 msg.reply(msg.content)
 
@@ -100,7 +122,7 @@ describe "Check basic operations", ()->
         @HoSAuth.connect().then ()=>
             @serviceOne.connect().then ()=>
                 @serviceTwo.connect().then ()=>
-                    @serviceTwo.sendMessage({} , @serviceCon.name, {task: 'contract', method: 'GET'}).then (replyPayload)=>
+                    @serviceTwo.sendMessage({} , @serviceCon.serviceDoc.basePath, {task: '/contract', method: 'get'}).then (replyPayload)=>
                         expect(JSON.stringify replyPayload).toEqual(JSON.stringify @serviceCon);
                         done()
 
@@ -111,7 +133,7 @@ describe "Check basic operations", ()->
         @HoSAuth.connect().then ()=>
             @serviceOne.connect().then ()=>
                 @serviceTwo.connect().then ()=>
-                    @serviceTwo.sendMessage({} , @serviceCon.name, {task: 'nonexistence', method: 'GET'})
+                    @serviceTwo.sendMessage({} , @serviceCon.serviceDoc.basePath, {task: '/nonexistence', method: 'get'})
                     .then (replyPayload)=>
                         console.log replyPayload
                     .catch (error)=>
@@ -125,7 +147,7 @@ describe "Check basic operations", ()->
         @HoSAuth.connect().then ()=>
             @serviceOne.connect().then ()=>
                 @serviceTwo.connect().then ()=>
-                    @serviceTwo.sendMessage({foo: 1} , @serviceCon.name, {task: 'users', method: 'GET'})
+                    @serviceTwo.sendMessage({foo: 1} , @serviceCon.serviceDoc.basePath, {task: '/users', method: 'get'})
                     .then (replyPayload)=>
                         console.log replyPayload
                     .catch (error)=>
@@ -133,7 +155,7 @@ describe "Check basic operations", ()->
                         expect(error.reason).toEqual('internal issue');
                         done()
 
-            @serviceOne.on 'users.GET', (msg)=>
+            @serviceOne.on '/users.get', (msg)=>
                 msg.content.foo = msg.content.foo + 1
                 msg.reject('internal issue', 501)
 
