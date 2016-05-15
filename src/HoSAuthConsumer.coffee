@@ -16,7 +16,7 @@ module.exports = (amqp, os, crypto, EventEmitter, URLSafeBase64, uuid, Promise) 
             connectionOk.catch (err)=>
                 @isClosed = true
                 @emit('error', err)
-                reject()
+                throw err
 
             connectionOk.then (conn)=>
                 @_amqpConnection = conn
