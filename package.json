@@ -1,6 +1,6 @@
 {
   "name": "hos-auth",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Authentication of HoS calls.",
   "main": "index.coffee",
   "scripts": {
